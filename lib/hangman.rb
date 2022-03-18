@@ -1,5 +1,6 @@
 module Hangman
   require_relative "format_color"
+  require "erb"
 
   class RandomWord
     def self.get_word
@@ -27,35 +28,52 @@ module Hangman
     def round_play
       puts "Select a char:"
       @char_selection = gets.chomp
-      @save_chars.push(@char_selection)
-      print_display()
-      puts " "
+      if @char_selection == "save"
+        save_state()
+        exit
+      elsif @char_selection == "load"
+        load_state()
+      elsif @save_chars.include?(@char_selection)
+        puts " "
+        puts "Repeat move, char already typed before."
+        self.round_play()
+      else
+        @save_chars.push(@char_selection)
+        print_display()
+        puts " "
+      end
     end
 
     def rounds_to_play(rounds = @word.length + 10)
-      round_number = 0
+      @round_number = 0
 
-      while round_number < rounds
-        round_number += 1
+      while @round_number < rounds
+        @round_number += 1
 
-        puts "Round #{round_number}"
+        puts "Round #{@round_number}"
         puts "Last movements:".ljust(20) + @save_chars.join(" ")
         puts "Correct movements:".ljust(20) + FormatColor.color(@correct_chars.uniq.join(" ").to_s, "green")
 
         round_play()
 
-        count_correct = 0
+        @count_correct = 0
         @correct_chars.each do |char|
           if @word_split.include?(char)
-            count_correct += 1
+            @count_correct += 1
           end
         end
 
-        if round_number == rounds
+        if @count_correct == @word_split.length
+          puts "Congrats, you win! The word is " + @word
+          puts @hangman_split.join(" ")
+          break
+        end
+
+        if @round_number == rounds
           puts "Loser!"
           puts "The word is " + @word
+          break
         end
-        break puts "Congrats, you win! The word is " + @word if count_correct == @word_split.length
       end
     end
 
@@ -69,6 +87,30 @@ module Hangman
         end
       end
       puts @hangman_split.join(" ")
+    end
+
+    def save_state
+      puts "Name of the saved file:"
+      @save_name = gets.chomp
+      save_template = File.read("save_state.erb")
+      save_state = ERB.new(save_template)
+      vars = save_state.result(binding)
+
+      Dir.mkdir("output") unless Dir.exist?("output")
+
+      filename = "output/#{@save_name}.rb"
+
+      File.open(filename, "w") do |file|
+        file.puts vars
+      end
+    end
+
+    def load_state
+      puts "Existing data"
+      puts Dir.glob("output/*.rb")
+      puts "Enter the filename to load:"
+      filename = gets.chomp
+      load("output/#{filename}.rb")
     end
   end
 end
