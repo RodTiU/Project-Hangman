@@ -51,11 +51,11 @@ module Hangman
           end
         end
 
-        break puts "Congrats, you win! The word is " + @word if count_correct == @word_split.length
         if round_number == rounds
           puts "Loser!"
           puts "The word is " + @word
         end
+        break puts "Congrats, you win! The word is " + @word if count_correct == @word_split.length
       end
     end
 
