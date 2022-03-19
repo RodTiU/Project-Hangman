@@ -1,6 +1,7 @@
 module Hangman
   require_relative "format_color"
   require "erb"
+  require "json"
 
   class RandomWord
     def self.get_word
@@ -99,31 +100,45 @@ module Hangman
     def save_state
       puts "Name of the saved file:"
       @save_name = gets.chomp
-      save_template = File.read("save_state.erb")
-      save_state = ERB.new(save_template)
-      vars = save_state.result(binding)
-
       @dir_games = "saved_games"
 
       Dir.mkdir(@dir_games) unless Dir.exist?(@dir_games)
 
-      filename = "#{@dir_games}/#{@save_name}.rb"
+      filename = "#{@dir_games}/#{@save_name}.json"
+
+      vars_to_save = {
+        "word" => @word,
+        "round_number" => @round_number - 1,
+        "save_chars" => @save_chars,
+        "correct_chars" => @correct_chars,
+        "word_split" => @word_split,
+        "hangman" => @hangman,
+        "hangman_split" => @hangman_split,
+      }
+
+      vars_to_json = vars_to_save.to_json
 
       File.open(filename, "w") do |file|
-        file.puts vars
+        file.puts vars_to_json
       end
     end
 
     def load_state
       puts " "
       puts "Existing data"
-      puts Dir.glob("saved_games/*.rb")
+      puts Dir.glob("saved_games/*.json")
       puts "Enter the filename to load:"
       filename = gets.chomp
 
-      load_vars = File.read("saved_games/#{filename}.rb")
+      load_vars = JSON.load(File.read("saved_games/#{filename}.json"))
 
-      eval(load_vars)
+      @word = load_vars["word"]
+      @round_number = load_vars["round_number"]
+      @save_chars = load_vars["save_chars"]
+      @correct_chars = load_vars["correct_chars"]
+      @word_split = load_vars["word_split"]
+      @hangman = load_vars["hangman"]
+      @hangman_split = load_vars["hangman_split"]
 
       puts " "
       puts "Load game:"
