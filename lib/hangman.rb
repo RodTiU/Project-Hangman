@@ -36,6 +36,10 @@ module Hangman
         load_state()
       elsif @char_selection == "quit"
         exit
+      elsif @char_selection.length > 1
+        puts " "
+        puts "Error length. Repeat."
+        self.round_play()
       elsif @save_chars.include?(@char_selection)
         puts " "
         puts "Repeat move, char already typed before."
